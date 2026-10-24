@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Canvas Security Impact — PS5 Web Lab</title>
+  <style>
+    :root{color-scheme:dark;--bg:#0b1020;--panel:#121d31;--panel2:#172740;--line:#2d4161;--text:#eef4ff;--muted:#a8bad4;--accent:#77c9ff;--good:#8de0b1;--warn:#ffd27a;--bad:#ff9f9f}
+    *{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,Segoe UI,sans-serif}body{padding:12px}.wrap{max-width:1040px;margin:0 auto}header,.card{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:14px;margin-bottom:11px}h1{font-size:clamp(22px,4vw,30px);line-height:1.15;margin:0 0 8px}h2{font-size:18px;margin:0 0 10px}h3{font-size:15px;margin:0 0 7px}.lead,.muted{color:var(--muted)}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.grid>.card{margin:0}.field{display:flex;flex-direction:column;gap:4px;margin:8px 0}.field label,.label{color:var(--muted);font-size:12px}.field input{font:inherit;color:var(--text);background:#0c1425;border:1px solid var(--line);border-radius:7px;padding:8px;max-width:100%}.value{display:block;overflow-wrap:anywhere;font-weight:600}.good{color:var(--good)}.warn{color:var(--warn)}.bad{color:var(--bad)}.row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px}button,.button{font:inherit;color:var(--text);background:var(--panel2);border:1px solid var(--line);border-radius:7px;padding:9px 11px;cursor:pointer}button:focus-visible{outline:2px solid var(--accent)}button.primary{background:#17466b;border-color:#2e81b5}button.danger{border-color:#875656;color:#ffdada}button:disabled{opacity:.5;cursor:default}.notice{border-left:3px solid var(--accent);padding:8px 10px;background:#0d1729;color:var(--muted);margin:9px 0}.notice.warn{border-color:var(--warn)}.statusline{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.statusbox{background:#0d1729;border:1px solid var(--line);border-radius:7px;padding:8px;min-width:0}progress{width:100%;height:16px}table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;vertical-align:top;padding:7px;border-bottom:1px solid var(--line);overflow-wrap:anywhere}th{color:var(--muted)}.result{border:1px solid var(--line);border-radius:8px;padding:9px;margin:8px 0;background:#0d1729}.result-title{font-weight:700;overflow-wrap:anywhere}.result pre,textarea{width:100%;max-height:320px;overflow:auto;white-space:pre-wrap;word-break:break-word;background:#080e19;color:#dbe9ff;border:1px solid var(--line);border-radius:6px;padding:8px;font:12px/1.4 ui-monospace,SFMono-Regular,Consolas,monospace}textarea{height:220px}.errorbox{white-space:pre-wrap;overflow-wrap:anywhere;color:var(--bad);border:1px solid #875656;border-radius:7px;padding:8px}details{margin:7px 0}summary{cursor:pointer;color:var(--accent)}.small{font-size:12px}.hidden{display:none!important}@media(max-width:680px){.grid{grid-template-columns:1fr}.statusline{grid-template-columns:1fr}body{padding:8px}header,.card{padding:11px}button{padding:10px}}
+  </style>
+</head>
+<body>
+<main class="wrap">
+  <header>
+    <h1>Canvas Security Impact</h1>
+    <p class="lead">Verifica separata e ripetibile di opzioni Canvas, pixel, conversione Web IDL e isolamento fra canvas. I test usano soltanto dati sintetici locali e non sono exploit.</p>
+    <div class="notice">La pagina non avvia il Vulnerability Scanner e non legge né modifica la sua coda localStorage. Usa una coda locale Canvas separata per riprendere gli invii dopo una ricarica; se localStorage non è disponibile, esporta i risultati prima di chiudere.</div>
+  </header>
+
+  <section class="grid">
+    <div class="card">
+      <h2>Sessione e ambiente</h2>
+      <div class="statusbox"><span class="label">Session ID</span><span class="value" id="sessionId">inizializzazione…</span></div>
+      <div class="field"><label for="firmware">Firmware dichiarato dall'operatore</label><input id="firmware" type="text" value="14.10" maxlength="80"></div>
+      <div class="statusbox"><span class="label">User-agent osservato</span><span class="value" id="userAgent"></span></div>
+      <div class="statusbox" style="margin-top:8px"><span class="label">Origin della pagina</span><span class="value" id="origin"></span></div>
+    </div>
+    <div class="card">
+      <h2>Server e persistenza</h2>
+      <div class="statusline">
+        <div class="statusbox"><span class="label">Backend</span><span class="value" id="backendState">Verifica in corso…</span></div>
+        <div class="statusbox"><span class="label">Log confermati</span><span class="value" id="persistenceState">Solo risultati in memoria</span></div>
+      </div>
+      <p class="small muted" id="logsPath">Destinazione attesa, dopo conferma health: logs/ sul server locale.</p>
+      <div class="row"><button id="retrySend">Verifica server e invia risultati in coda</button><button id="exportJson" class="primary">Esporta JSON locale</button></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Campagna A–E</h2>
+    <p class="muted">Ogni ripetizione crea canvas indipendenti: cinque casi A, il controllo positivo Blob e il controllo di isolamento. Una nuova campagna aggiunge risultati alla sessione corrente; non li cancella.</p>
+    <div class="row"><button id="startCampaign" class="primary">Avvia campagna (5 ripetizioni)</button><button id="stopCampaign" class="danger" disabled>Interrompi dopo il controllo corrente</button></div>
+    <progress id="progress" max="35" value="0"></progress>
+    <div class="statusline"><span id="progressLabel" class="muted">Nessun test avviato</span><span id="resultCount" class="muted">0 risultati</span></div>
+    <div id="campaignError" class="errorbox hidden" role="alert"></div>
+  </section>
+
+  <section class="card">
+    <h2>Risultati ripetuti</h2>
+    <p class="small muted">La percentuale di concordanza indica la quota di esecuzioni con la firma osservata più frequente. Non è una misura di sicurezza.</p>
+    <div id="aggregates"><p class="muted">Le statistiche appariranno dopo una campagna.</p></div>
+  </section>
+
+  <section class="card">
+    <h2>Controllo F — barriera Canvas cross-origin</h2>
+    <p class="muted">Opzionale e indipendente da F-01. Richiede una seconda origine realmente attiva sulla LAN; il test non crea una simulazione se la risorsa non è raggiungibile.</p>
+    <div class="field"><label for="crossOriginPort">Porta del server ausiliario senza CORS</label><input id="crossOriginPort" type="text" inputmode="numeric" value="8001" maxlength="5"></div>
+    <div class="row"><button id="runCrossOrigin">Esegui una prova cross-origin</button><span id="crossOriginState" class="muted">NOT_RUN — nessuna richiesta eseguita</span></div>
+    <p id="crossOriginDetails" class="small muted">Il browser non espone alla pagina gli header HTTP di una risposta immagine cross-origin. Il server ausiliario registra Host e policy risposta; verifica anche con curl sul PC. La pagina non imposta l'attributo CORS sull'immagine.</p>
+  </section>
+
+  <section class="card">
+    <h2>Dettaglio prove grezze e interpretazioni</h2>
+    <div id="results"><p class="muted">Nessuna prova ancora eseguita.</p></div>
+  </section>
+
+  <section class="card">
+    <h2>Salvaguardia JSON</h2>
+    <p class="small muted">Se il backend non conferma un evento, questo resta nella coda Canvas dedicata e viene reinviato dopo un health check valido. Se localStorage è disabilitato o pieno, resta in memoria e va esportato prima di chiudere.</p>
+    <textarea id="exportPreview" class="hidden" readonly aria-label="Export JSON copiabile"></textarea>
+  </section>
+
+  <section class="card">
+    <h2>Interpretazione</h2>
+    <p>Gli stati <code>EXPECTED</code>, <code>SPEC_ANOMALY_CANDIDATE</code> e <code>REPRODUCIBLE_FUNCTIONAL_DIFFERENCE</code> descrivono il controllo, non una vulnerabilità. Una lettura cross-origin riuscita viene fermata e marcata <code>SECURITY_BOUNDARY_ANOMALY_PENDING_REPRODUCTION</code>, senza tentare bypass ulteriori.</p>
+    <p class="muted">Nessun test deduce una CVE, un accesso a memoria nativa o un escape della sandbox. Firmware e user-agent sono valori dichiarati/esposti, non attestazioni crittografiche.</p>
+  </section>
+</main>
+<script src="/pages/canvas-security-impact-core.js"></script>
+<script src="/pages/canvas-security-impact.js"></script>
+<script src="/pages/research-transfer-core.js"></script>
+<script src="/pages/research-transfer.js"></script>
+</body>
+</html>

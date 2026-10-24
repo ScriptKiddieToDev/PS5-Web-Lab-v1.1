@@ -1,0 +1,217 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>PS5 Canvas reentrancy audit</title>
+  <style>
+    html, body { background:#10151c; color:#e8edf2; font-family:Arial,sans-serif; margin:0; }
+    body { padding:18px; font-size:20px; line-height:1.35; }
+    h1 { font-size:28px; margin:0 0 8px; }
+    p { margin:8px 0 14px; }
+    button { background:#2f78c4; border:0; border-radius:5px; color:white; font-size:20px; margin:4px 6px 4px 0; padding:10px 14px; }
+    button:active { background:#1d4e80; }
+    #status { color:#ffd166; min-height:1.4em; }
+    #report { background:#070a0e; border:1px solid #536170; border-radius:4px; box-sizing:border-box; color:#cfe8d5; font-family:monospace; font-size:16px; min-height:300px; padding:12px; white-space:pre-wrap; width:100%; }
+    textarea { position:absolute; left:-10000px; top:-10000px; }
+    .note { color:#b9c5d2; font-size:16px; }
+  </style>
+</head>
+<body>
+  <h1>Canvas getContext() reentrancy audit</h1>
+  <p class="note">Test non distruttivo ispirato a P166. Non usa GC, heap spray, puntatori, primitive di memoria o servizi esterni.</p>
+  <p id="status">Pronto. Eseguire prima il controllo base oppure tutto il rapporto.</p>
+  <button id="runAll">Esegui controllo + 3 ripetizioni</button>
+  <button id="runBasic">Solo controllo base</button>
+  <button id="clear">Cancella rapporto</button>
+  <button id="copy">Copia rapporto</button>
+  <button id="select">Seleziona rapporto</button>
+  <pre id="report" aria-live="polite"></pre>
+  <textarea id="copyBuffer" readonly></textarea>
+
+  <script>
+  (function () {
+    'use strict';
+    var report = document.getElementById('report');
+    var status = document.getElementById('status');
+    var copyBuffer = document.getElementById('copyBuffer');
+    var lines = [];
+    var stopped = false;
+
+    function text(value) {
+      return String(value);
+    }
+
+    function write(line) {
+      lines.push(line);
+      report.textContent = lines.join('\n');
+    }
+
+    function setStatus(value) {
+      status.textContent = value;
+    }
+
+    function copyReport() {
+      copyBuffer.value = lines.join('\n');
+      copyBuffer.focus();
+      copyBuffer.select();
+      var copied = false;
+      try {
+        copied = document.execCommand('copy');
+      } catch (ignore) {}
+      setStatus(copied ? 'Rapporto copiato.' : 'Rapporto selezionato: usare Copia dal menu del browser.');
+    }
+
+    function selectReport() {
+      copyBuffer.value = lines.join('\n');
+      copyBuffer.focus();
+      copyBuffer.select();
+      setStatus('Rapporto selezionato.');
+    }
+
+    function reset() {
+      lines = [];
+      stopped = false;
+      report.textContent = '';
+      setStatus('Rapporto cancellato.');
+    }
+
+    function identity(a, b) {
+      return a === b ? 'same' : 'different';
+    }
+
+    function runBasic() {
+      var canvas;
+      var first;
+      var second;
+      try {
+        canvas = document.createElement('canvas');
+        first = canvas.getContext('2d');
+        second = canvas.getContext('2d');
+        write('BASIC contextA=' + !!first + ' contextB=' + !!second + ' identity=' + identity(first, second));
+        if (!first || !second) {
+          write('BASIC outcome=INCONCLUSIVE context-unavailable');
+          return false;
+        }
+        if (first !== second) {
+          write('BASIC outcome=INCONCLUSIVE repeated-2d-context-different');
+          return false;
+        }
+        write('BASIC outcome=API_AVAILABLE_NORMAL_REUSE');
+        return true;
+      } catch (error) {
+        write('BASIC outcome=ERROR exception=' + error.name + ':' + text(error.message));
+        return false;
+      }
+    }
+
+    function runReentrant(variant, iteration) {
+      var canvas;
+      var inner = null;
+      var outer = null;
+      var current = null;
+      var getterCalls = 0;
+      var getterNames = [];
+      var options;
+      var outcome;
+
+      try {
+        canvas = document.createElement('canvas');
+        if (variant === 'alpha') {
+          options = {
+            get alpha() {
+              getterCalls++;
+              getterNames.push('alpha');
+              if (getterCalls === 1) inner = canvas.getContext('2d');
+              return true;
+            }
+          };
+        } else {
+          options = {
+            get desynchronized() {
+              getterCalls++;
+              getterNames.push('desynchronized');
+              if (getterCalls === 1) inner = canvas.getContext('2d');
+              return true;
+            }
+          };
+        }
+
+        outer = canvas.getContext('2d', options);
+        current = canvas.getContext('2d');
+
+        if (getterCalls === 0) {
+          outcome = 'GETTER_NOT_INVOKED';
+        } else if (!inner || !outer || !current) {
+          outcome = 'INCONCLUSIVE_CONTEXT_UNAVAILABLE';
+        } else if (outer === inner && current === outer) {
+          outcome = 'API_AVAILABLE_NORMAL_REUSE';
+        } else if (outer !== inner && current === outer) {
+          outcome = 'REENTRANCY_OBSERVED_CONTEXT_REPLACEMENT';
+        } else if (outer !== inner && current === inner) {
+          outcome = 'CONTEXTS_DIFFERENT_CURRENT_IS_INNER';
+        } else {
+          outcome = 'INCONCLUSIVE_UNEXPECTED_IDENTITY';
+        }
+
+        write('TEST variant=' + variant + ' iteration=' + iteration +
+          ' getterCalls=' + getterCalls +
+          ' getterNames=' + (getterNames.join(',') || 'none') +
+          ' inner=' + !!inner + ' outer=' + !!outer + ' current=' + !!current +
+          ' outerInner=' + identity(outer, inner) +
+          ' currentOuter=' + identity(current, outer) +
+          ' currentInner=' + identity(current, inner));
+        write('TEST variant=' + variant + ' iteration=' + iteration + ' outcome=' + outcome);
+
+        if (outcome.indexOf('ERROR') === 0 || outcome.indexOf('INCONCLUSIVE_CONTEXT') === 0) {
+          stopped = true;
+          setStatus('Prove interrotte dopo un errore o contesto non disponibile.');
+        }
+        return outcome;
+      } catch (error) {
+        write('TEST variant=' + variant + ' iteration=' + iteration +
+          ' outcome=ERROR exception=' + error.name + ':' + text(error.message));
+        stopped = true;
+        setStatus('Prove interrotte dopo un’eccezione.');
+        return 'ERROR';
+      }
+    }
+
+    function runAll() {
+      reset();
+      write('CANVAS_REENTRANCY_AUDIT version=1');
+      write('userAgent=' + navigator.userAgent);
+      write('source=P166 alpha getter; independent desynchronized getter');
+      write('note=identity difference is not memory corruption, UAF, arbitrary read/write, or code execution');
+      if (!runBasic()) {
+        setStatus('Controllo base inconcludente: ripetizioni non avviate.');
+        return;
+      }
+      var variants = ['alpha', 'desynchronized'];
+      var i;
+      var j;
+      for (i = 0; i < variants.length; i++) {
+        for (j = 1; j <= 3; j++) {
+          if (stopped) return;
+          runReentrant(variants[i], j);
+        }
+      }
+      if (!stopped) setStatus('Rapporto completato. Nessun risultato hardware è stato raccolto automaticamente.');
+      write('SUMMARY repeatability=review_each_iteration');
+      write('SUMMARY interpretation=see outcome labels above; no exploit conclusion');
+    }
+
+    document.getElementById('runAll').onclick = runAll;
+    document.getElementById('runBasic').onclick = function () {
+      reset();
+      write('CANVAS_REENTRANCY_AUDIT basic-only');
+      write('userAgent=' + navigator.userAgent);
+      runBasic();
+    };
+    document.getElementById('clear').onclick = reset;
+    document.getElementById('copy').onclick = copyReport;
+    document.getElementById('select').onclick = selectReport;
+  }());
+  </script>
+</body>
+</html>

@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <title>PS5 WebKit - Test API</title>
+</head>
+<body>
+  <h1>Test API browser PS5</h1>
+  <pre id="output">Test in corso...</pre>
+  <script>
+    const results = {
+      userAgent: navigator.userAgent,
+      WebAssembly: typeof WebAssembly,
+      SharedArrayBuffer: typeof SharedArrayBuffer,
+      IndexedDB: typeof indexedDB,
+      ServiceWorker: "serviceWorker" in navigator,
+      ReadableStream: typeof ReadableStream,
+      WritableStream: typeof WritableStream,
+      TransformStream: typeof TransformStream,
+      ResizableArrayBuffer: (() => {
+        try {
+          return typeof new ArrayBuffer(8, {
+            maxByteLength: 16
+          }).resize;
+        } catch (e) {
+          return "non disponibile";
+        }
+      })(),
+      Atomics: typeof Atomics,
+      Worker: typeof Worker,
+      FontFace: typeof FontFace,
+      WebSocket: typeof WebSocket,
+      fetch: typeof fetch,
+      WebGL: (() => {
+        try {
+          return !!document
+            .createElement("canvas")
+            .getContext("webgl");
+        } catch (e) {
+          return false;
+        }
+      })()
+    };
+
+    document.getElementById("output").textContent =
+      JSON.stringify(results, null, 2);
+  </script>
+</body>
+</html>

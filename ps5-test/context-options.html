@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="it">
+<meta charset="utf-8">
+<title>Canvas options compatibility test</title>
+<body>
+<h1>Test compatibilità Canvas</h1>
+<pre id="result">Test in corso...</pre>
+<script>
+let getterCalls = 0;
+let context = null;
+let error = null;
+
+try {
+  const canvas = document.createElement("canvas");
+  const options = {
+    get alpha() {
+      getterCalls++;
+      return true;
+    }
+  };
+
+  context = canvas.getContext("2d", options);
+} catch (e) {
+  error = e.name + ": " + e.message;
+}
+
+document.getElementById("result").textContent =
+  JSON.stringify({
+    getterCalls,
+    contextCreated: !!context,
+    error
+  }, null, 2);
+</script>
+</body>
+</html>

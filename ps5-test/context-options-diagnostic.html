@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="it">
+<meta charset="utf-8">
+<title>Canvas options diagnostic</title>
+<body>
+<h1>Diagnostica Canvas</h1>
+<pre id="result">Test in corso...</pre>
+<script>
+function testOption(name) {
+  let getterCalls = 0;
+  let context = null;
+  let error = null;
+
+  try {
+    const canvas = document.createElement("canvas");
+    const options = {
+      get [name]() {
+        getterCalls++;
+        return false;
+      }
+    };
+    context = canvas.getContext("2d", options);
+  } catch (e) {
+    error = e.name + ": " + e.message;
+  }
+
+  return {
+    option: name,
+    getterCalls,
+    contextCreated: !!context,
+    error
+  };
+}
+
+document.getElementById("result").textContent =
+  JSON.stringify([
+    testOption("alpha"),
+    testOption("desynchronized")
+  ], null, 2);
+</script>
+</body>
+</html>

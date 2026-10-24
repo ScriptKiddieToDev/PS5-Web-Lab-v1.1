@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>PS5 Web Lab — Hub locale</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1020;--panel:#111a2d;--panel2:#17233a;--line:#2a3a57;--text:#eef4ff;--muted:#9fb1cf;--accent:#71c2ff;--good:#83e0af;--warn:#ffd27a}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font:16px/1.45 system-ui,-apple-system,Segoe UI,sans-serif}body{height:100vh;overflow:hidden}
+.app{height:100vh;display:grid;grid-template-columns:300px minmax(0,1fr);grid-template-rows:auto minmax(0,1fr)}
+header{grid-column:1/-1;display:flex;align-items:center;gap:14px;padding:12px 18px;background:#0d1527;border-bottom:1px solid var(--line);min-width:0}
+.logo{display:grid;place-items:center;width:38px;height:38px;border:1px solid #3b6389;border-radius:12px;color:var(--accent);font-weight:800;flex-shrink:0}
+.headtext{min-width:0}h1{font-size:17px;line-height:1.2;margin:0 0 3px} .sub{font-size:12px;color:var(--muted)}
+.pill{margin-left:auto;border:1px solid #26563f;background:#112d27;color:var(--good);border-radius:999px;padding:5px 10px;font-size:12px;white-space:nowrap}
+aside{min-height:0;overflow:auto;border-right:1px solid var(--line);background:var(--panel);padding:14px;display:flex;flex-direction:column;gap:12px}
+.section-label{font-size:11px;text-transform:uppercase;letter-spacing:.11em;color:var(--muted);font-weight:700}
+.controls{display:flex;gap:7px}.btn{font:inherit;color:var(--text);background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:8px 10px;cursor:pointer}.btn:hover,.btn:focus-visible{border-color:var(--accent);outline:none}.btn.small{font-size:12px;padding:7px 9px}
+input{width:100%;font:inherit;color:var(--text);background:#0c1425;border:1px solid var(--line);border-radius:9px;padding:10px;outline:none}input:focus{border-color:var(--accent)}
+#pageList{display:flex;flex-direction:column;gap:5px}.page-link{display:block;width:100%;text-align:left;text-decoration:none;color:var(--text);padding:10px 11px;border-radius:9px;border:1px solid transparent;background:transparent;cursor:pointer;overflow-wrap:anywhere}.page-link:hover{background:#18243a;border-color:#2a3e60}.page-link.active{background:#15304a;border-color:#3676a9;color:#fff}.page-name{font-size:14px;font-weight:650}.page-title{font-size:11px;color:var(--muted);margin-top:3px}.empty{color:var(--muted);font-size:13px;padding:10px}
+.note{margin-top:auto;padding:11px;border:1px solid var(--line);border-radius:10px;background:#0e1729;color:var(--muted);font-size:12px}.note strong{color:var(--text)}
+main{display:flex;flex-direction:column;min-width:0;min-height:0}.toolbar{display:flex;align-items:center;gap:8px;padding:10px 13px;border-bottom:1px solid var(--line);background:#10192b;min-width:0}.current{font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}.toolbar .spacer{flex:1}.frame-wrap{flex:1;min-height:0;background:#fff;position:relative}iframe{width:100%;height:100%;border:0;background:#fff}.welcome{max-width:740px;margin:7vh auto;padding:26px;color:#172033;font:16px/1.6 system-ui,sans-serif}.welcome h2{margin-top:0;color:#13517a}.welcome code{background:#eaf2f9;padding:2px 5px;border-radius:4px}.status{padding:6px 12px;border-top:1px solid var(--line);font-size:11px;color:var(--muted);background:#0d1527;display:flex;justify-content:space-between;gap:12px}.status span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:760px){body{overflow:auto;height:100vh}.app{grid-template-columns:1fr;grid-template-rows:auto auto minmax(430px,1fr);height:100vh;min-height:100vh}header{grid-column:1;padding:10px}.app>aside{grid-row:2;max-height:34vh;border-right:0;border-bottom:1px solid var(--line)}main{grid-row:3;min-height:430px}.note{margin-top:0}.pill{font-size:10px;padding:4px 7px}}
+.analysis{height:100%;overflow:auto;padding:18px;background:var(--bg);color:var(--text)}.analysis h2{margin:0 0 4px;font-size:21px}.analysis h3{margin:0 0 10px;font-size:15px}.analysis p{margin:5px 0;color:var(--muted)}.analysis-head{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}.analysis-head>div,.analysis-head>p{flex:1 1 100%;margin:0}.analysis-head button{flex:0 0 auto}.analysis-grid{display:grid;grid-template-columns:repeat(4,minmax(130px,1fr));gap:10px;margin:14px 0}.metric,.analysis-card{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:13px;min-width:0}.metric label{display:block;color:var(--muted);font-size:12px}.metric strong{display:block;font-size:16px;margin-top:3px;overflow-wrap:anywhere}.analysis-card{margin:12px 0}.filters{display:grid;grid-template-columns:repeat(6,minmax(120px,1fr));gap:8px;margin:10px 0}.filters input,.filters select{font:inherit;color:var(--text);background:#0c1425;border:1px solid var(--line);border-radius:8px;padding:8px;min-width:0}.event-list{display:grid;gap:7px}.event-item{display:grid;grid-template-columns:minmax(125px,190px) minmax(140px,1fr) minmax(100px,auto);gap:8px;align-items:center;text-align:left;color:var(--text);background:#0c1425;border:1px solid var(--line);border-radius:9px;padding:10px;cursor:pointer}.event-item:hover{border-color:var(--accent)}.event-item small,.muted{color:var(--muted)}.event-detail{white-space:pre-wrap;overflow-wrap:anywhere;max-height:360px;overflow:auto;background:#0c1425;border:1px solid var(--line);border-radius:8px;padding:10px}.tag{display:inline-block;border:1px solid #365273;border-radius:999px;padding:2px 7px;font-size:11px;color:#c8e6ff}.warning{color:var(--warn)!important}.good{color:var(--good)!important}@media(max-width:850px){.analysis-grid{grid-template-columns:repeat(2,minmax(130px,1fr))}.filters{grid-template-columns:repeat(2,minmax(120px,1fr))}}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <div class="logo">PS5</div>
+  <div class="headtext"><h1>PS5 Web Lab</h1><div class="sub">Hub locale · navigazione centralizzata dei test</div></div>
+  <div class="pill" id="connection">Elenco pagine: verifica…</div>
+</header>
+<aside>
+  <div class="section-label">Pagine di test</div>
+  <input id="search" type="search" placeholder="Filtra per nome o titolo…" aria-label="Filtra pagine">
+  <div class="controls">
+    <button class="btn small" id="refresh" type="button">Aggiorna elenco</button>
+    <button class="btn small" id="openCurrent" type="button">Apri scheda corrente</button>
+  </div>
+  <div id="pageList"><div class="empty">Caricamento pagine…</div></div>
+  <div class="note"><strong>Come si aggiorna</strong><br>Il menu legge una volta l'elenco di <code>/pages/</code> all'apertura. Per rileggere i nomi usa “Aggiorna elenco”; non ci sono scansioni periodiche e nessun test parte da solo.</div>
+</aside>
+<main>
+  <div class="toolbar">
+    <div class="current" id="current">Seleziona una pagina dall'elenco</div>
+    <div class="spacer"></div>
+    <button class="btn small" id="researchLabButton" type="button">Active Vulnerability Research Lab</button>
+    <button class="btn small" id="transferButton" type="button">Trasferimento file</button>
+    <button class="btn small" id="analysisButton" type="button">Security Analysis Center</button>
+    <button class="btn small" id="closeTest" type="button">Chiudi test</button>
+    <button class="btn small" id="reloadPage" type="button">Ricarica test</button>
+  </div>
+  <div class="frame-wrap" id="frameWrap">
+    <section class="analysis" id="analysisCenter" aria-label="Security Analysis Center">
+      <div class="analysis-head"><div><h2>Security Analysis Center</h2><span class="tag">Storico in sola lettura</span></div><p>Risultati sperimentali di Canvas e del Vulnerability Scanner. Le osservazioni Canvas non confermano da sole una vulnerabilità; una mancata rilevazione non prova assenza.</p><button class="btn" id="analysisRefresh" type="button">Aggiorna dati</button><button class="btn" id="exportFilteredJson" type="button">Esporta JSON filtrato</button><button class="btn" id="exportFilteredCsv" type="button">Esporta CSV filtrato</button></div>
+      <p id="analysisStatus" role="status">Lettura storico in corso…</p>
+      <div class="analysis-grid">
+        <div class="metric"><label>Ultima analisi Canvas</label><strong id="metricCanvas">—</strong></div><div class="metric"><label>Ultima scansione scanner</label><strong id="metricScanner">—</strong></div><div class="metric"><label>Sessioni (complete / incomplete)</label><strong id="metricSessions">—</strong></div><div class="metric"><label>Esiti test (PASS / FAIL / inconcludenti)</label><strong id="metricResults">—</strong></div>
+      </div>
+      <div class="analysis-card"><h3>Raccolta eventi</h3><p id="collectionStatus">Stato non disponibile.</p><p id="backendErrors" class="warning"></p></div>
+      <div class="analysis-card"><h3>Canvas Security Impact</h3><p id="canvasSummary">Nessuna analisi disponibile.</p><div id="canvasCases" class="event-list"></div></div>
+      <div class="analysis-card"><h3>Vulnerability Scanner</h3><p id="scannerSummary">Nessuna scansione disponibile.</p><div id="scannerFindings" class="event-list"></div></div>
+      <div class="analysis-card"><h3>Confronto tra le analisi</h3><p id="comparison">Non ci sono ancora dati sufficienti per un confronto.</p></div>
+      <div class="analysis-card"><h3>Cronologia unificata</h3><div class="filters"><input id="filterFrom" type="date" aria-label="Da data"><input id="filterTo" type="date" aria-label="A data"><select id="filterTool" aria-label="Strumento"><option value="">Tutti gli strumenti</option><option value="canvas">Canvas</option><option value="scanner">Vulnerability Scanner</option><option value="mixed">Sessione mista</option><option value="unknown">Non identificato</option></select><select id="filterSession" aria-label="Sessione"><option value="">Tutte le sessioni</option></select><select id="filterCategory" aria-label="Categoria"><option value="">Tutte le categorie</option></select><select id="filterOutcome" aria-label="Esito"><option value="">Tutti gli esiti</option></select></div><p id="timelineCount">0 eventi</p><div id="eventList" class="event-list"></div><h3>Dettaglio evento</h3><pre id="eventDetail" class="event-detail">Seleziona un evento per vedere i dettagli.</pre></div>
+    </section>
+  </div>
+  <div class="status"><span id="statusLeft">Pronto</span><span id="statusRight">Solo risorse locali</span></div>
+</main>
+</div>
+<script src="/dashboard-security-center.js"></script>
+<script>
+(function () {
+  'use strict';
+  var list = document.getElementById('pageList');
+  var search = document.getElementById('search');
+  var current = document.getElementById('current');
+  var statusLeft = document.getElementById('statusLeft');
+  var connection = document.getElementById('connection');
+  var frameWrap = document.getElementById('frameWrap');
+  var analysisCenter = document.getElementById('analysisCenter');
+  var pages = [];
+  var activeUrl = '';
+  var activeFrame = null;
+  var scanInProgress = false;
+
+  function prettify(s) {
+    return s.replace(/\.html?$/i, '').replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+
+  function pagePath(href) {
+    var value = String(href || '').split('#')[0].split('?')[0];
+    if (value.charAt(0) !== '/') value = '/pages/' + value;
+    if (value.indexOf('/pages/') !== 0 || !/\.html?$/i.test(value)) return '';
+    if (value.toLowerCase() === '/pages/dashboard.html') return '';
+    return value;
+  }
+
+  function scanPages() {
+    if (scanInProgress) return;
+    scanInProgress = true;
+    list.innerHTML = '<div class="empty">Lettura del solo elenco dei test…</div>';
+    statusLeft.textContent = 'Lettura elenco pagine…';
+    fetch('/pages/?_=' + Date.now(), {cache:'no-store'}).then(function (res) {
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return res.text();
+    }).then(function (html) {
+      var matches = html.match(/href\s*=\s*["'][^"']+["']/gi) || [];
+      var seen = {};
+      var found = [];
+      var i;
+      for (i = 0; i < matches.length; i++) {
+        var href = matches[i].replace(/^href\s*=\s*["']/i, '').replace(/["']$/, '');
+        var path = pagePath(href);
+        if (!path || seen[path]) continue;
+        seen[path] = true;
+        var name = decodeURIComponent(path.substring(path.lastIndexOf('/') + 1));
+        found.push({name:name, url:path, title:prettify(name)});
+      }
+      found.sort(function (a, b) { return a.name.localeCompare(b.name, 'it'); });
+      pages = found;
+      connection.textContent = 'Elenco pagine caricato';
+      connection.style.color = 'var(--good)';
+      connection.style.borderColor = '#26563f';
+      renderList();
+      statusLeft.textContent = pages.length + ' pagine HTML trovate; nessun test caricato';
+      if (!pages.length) {
+        list.innerHTML = '<div class="empty">Nessuna pagina HTML trovata. Aggiungi un file .html nella cartella /tmp/ps5-test/pages/ e premi “Aggiorna elenco”.</div>';
+      }
+    }).catch(function (err) {
+      connection.textContent = 'Elenco pagine non disponibile';
+      connection.style.color = 'var(--warn)';
+      var error = document.createElement('div');
+      error.className = 'empty';
+      error.textContent = 'Non riesco a leggere /pages/ (' + String(err.message || err) + '). Controlla il server locale.';
+      list.textContent = '';
+      list.appendChild(error);
+      statusLeft.textContent = 'Errore durante la scansione';
+    }).then(function () {
+      scanInProgress = false;
+    });
+  }
+
+  function renderList() {
+    var q = search.value.trim().toLocaleLowerCase('it');
+    var visible = [];
+    var i;
+    list.innerHTML = '';
+    for (i = 0; i < pages.length; i++) {
+      if ((pages[i].name + ' ' + pages[i].title).toLocaleLowerCase('it').indexOf(q) !== -1) visible.push(pages[i]);
+    }
+    if (!visible.length) {
+      list.innerHTML = '<div class="empty">Nessuna pagina corrisponde al filtro.</div>';
+      return;
+    }
+    for (i = 0; i < visible.length; i++) {
+      (function (page) {
+        var b = document.createElement('button');
+        var name = document.createElement('div');
+        var title = document.createElement('div');
+        b.type = 'button';
+        b.className = 'page-link' + (page.url === activeUrl ? ' active' : '');
+        name.className = 'page-name';
+        title.className = 'page-title';
+        name.textContent = page.name;
+        title.textContent = page.title;
+        b.appendChild(name);
+        b.appendChild(title);
+        b.onclick = function () { openPage(page); };
+        list.appendChild(b);
+      }(visible[i]));
+    }
+  }
+
+  function removeActiveFrame() {
+    if (activeFrame) {
+      activeFrame.onload = null;
+      activeFrame.src = 'about:blank';
+      if (activeFrame.parentNode) activeFrame.parentNode.removeChild(activeFrame);
+      activeFrame = null;
+    }
+  }
+
+  function closeTest() {
+    removeActiveFrame();
+    activeUrl = '';
+    current.textContent = 'Seleziona una pagina dall\'elenco';
+    analysisCenter.hidden = false;
+    renderList();
+    statusLeft.textContent = 'Test chiuso; schermata leggera attiva';
+  }
+
+  function openPage(page) {
+    if (!page || page.url.indexOf('/pages/') !== 0 || !/\.html?$/i.test(page.url)) return;
+    removeActiveFrame();
+    analysisCenter.hidden = true;
+    activeUrl = page.url;
+    current.textContent = page.name + ' — ' + page.title;
+    activeFrame = document.createElement('iframe');
+    activeFrame.title = 'Pagina di test selezionata';
+    activeFrame.referrerPolicy = 'no-referrer';
+    activeFrame.onload = function () {
+      statusLeft.textContent = 'Pagina caricata: ' + page.name;
+    };
+    frameWrap.appendChild(activeFrame);
+    activeFrame.src = page.url;
+    renderList();
+  }
+
+  document.getElementById('refresh').onclick = scanPages;
+  document.getElementById('analysisButton').onclick = function () {
+    removeActiveFrame(); activeUrl = ''; analysisCenter.hidden = false;
+    current.textContent = 'Security Analysis Center'; renderList(); statusLeft.textContent = 'Storico sicurezza in sola lettura';
+  };
+  document.getElementById('researchLabButton').onclick = function () {
+    openPage({url:'/pages/active-vulnerability-research-lab.html', name:'Active Vulnerability Research Lab', title:'Test JavaScript controllati'});
+  };
+  document.getElementById('transferButton').onclick = function () {
+    removeActiveFrame();
+    analysisCenter.hidden = true;
+    activeUrl = 'http://' + location.hostname + ':8765/pages/local-transfer.html';
+    current.textContent = 'Trasferimento file';
+    activeFrame = document.createElement('iframe');
+    activeFrame.title = 'Trasferimento file locale';
+    activeFrame.referrerPolicy = 'no-referrer';
+    activeFrame.onload = function () { statusLeft.textContent = 'Pagina trasferimento caricata sulla porta 8765'; };
+    frameWrap.appendChild(activeFrame);
+    activeFrame.src = activeUrl;
+    renderList();
+  };
+  document.getElementById('closeTest').onclick = closeTest;
+  document.getElementById('reloadPage').onclick = function () {
+    if (activeFrame && activeUrl) activeFrame.src = activeUrl + (activeUrl.indexOf('?') !== -1 ? '&' : '?') + '_reload=' + Date.now();
+  };
+  document.getElementById('openCurrent').onclick = function () {
+    if (activeUrl) location.href = activeUrl;
+  };
+  search.oninput = renderList;
+  scanPages();
+}());
+</script>
+</body>
+</html>

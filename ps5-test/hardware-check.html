@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>PS5 Browser Diagnostics</title>
+  <style>
+    body {
+      background: #10131b;
+      color: #e8edf7;
+      font: 20px monospace;
+      padding: 24px;
+      overflow-wrap: anywhere;
+    }
+    h1 { color: #7fc8ff; }
+    pre { white-space: pre-wrap; line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <h1>PS5 Browser Diagnostics</h1>
+  <p>Test JavaScript non distruttivi</p>
+  <pre id="out">Avvio dei test...</pre>
+
+<script>
+(() => {
+  const out = document.getElementById('out');
+  const report = {
+    userAgent: navigator.userAgent,
+    javascript: 'eseguito',
+    wasm: typeof WebAssembly,
+    sharedArrayBuffer: typeof SharedArrayBuffer,
+    worker: typeof Worker,
+    fetch: typeof fetch,
+    webSocket: typeof WebSocket,
+    indexedDB: typeof indexedDB,
+    serviceWorker: 'serviceWorker' in navigator,
+    performanceNow: typeof performance.now,
+    requestAnimationFrame: typeof requestAnimationFrame
+  };
+
+  try {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    report.canvas2D = !!ctx;
+    if (ctx) {
+      ctx.fillStyle = '#4da3ff';
+      ctx.fillRect(0, 0, 8, 8);
+      report.canvasDraw = canvas.toDataURL().startsWith('data:image/');
+    }
+  } catch (e) {
+    report.canvasError = String(e);
+  }
+
+  try {
+    report.webGL = !!document.createElement('canvas')
+      .getContext('webgl');
+  } catch (e) {
+    report.webGL = 'errore: ' + String(e);
+  }
+
+  setTimeout(() => {
+    report.timer = 'eseguito';
+    out.textContent = JSON.stringify(report, null, 2);
+
+    // Invia il risultato al server locale per registrarlo nel log HTTP.
+    // Il semplice server Python può rispondere 404 a /beacon:
+    // il risultato resta comunque visibile sullo schermo.
+    const beacon = new Image();
+    beacon.src = '/beacon?m=' +
+      encodeURIComponent(JSON.stringify(report));
+  }, 250);
+})();
+</script>
+</body>
+</html>

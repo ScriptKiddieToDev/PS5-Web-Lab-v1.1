@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>PS5 Canvas API Check</title>
+<style>
+body { background:#111; color:#eee; font:18px monospace; padding:20px; }
+pre { white-space:pre-wrap; overflow-wrap:anywhere; }
+</style>
+</head>
+<body>
+<h2>Canvas API — controllo non distruttivo</h2>
+<pre id="out">Avvio...</pre>
+<script>
+(() => {
+  const out = document.getElementById('out');
+  const lines = [];
+  const log = s => { lines.push(s); out.textContent = lines.join('\n'); };
+
+  log('START');
+  log('UA=' + navigator.userAgent);
+
+  function run(label, type, optionName, optionValue) {
+    const canvas = document.createElement('canvas');
+    const options = {};
+    let getterCalls = 0;
+    let ctx = null;
+    let error = null;
+
+    if (optionName) {
+      Object.defineProperty(options, optionName, {
+        enumerable: true,
+        get() {
+          getterCalls++;
+          return optionValue;
+        }
+      });
+    }
+
+    try {
+      ctx = optionName
+        ? canvas.getContext(type, options)
+        : canvas.getContext(type);
+    } catch (e) {
+      error = String(e);
+    }
+
+    log(label +
+      ' contextCreated=' + Boolean(ctx) +
+      ' contextType=' + (ctx && ctx.constructor
+        ? ctx.constructor.name : 'null') +
+      ' getterCalls=' + getterCalls +
+      ' error=' + (error === null ? 'null' : error));
+  }
+
+  run('control-2d', '2d', null, null);
+  run('2d-alpha', '2d', 'alpha', true);
+  run('2d-desynchronized', '2d', 'desynchronized', false);
+  run('bitmaprenderer-alpha', 'bitmaprenderer', 'alpha', false);
+
+  log('DONE');
+})();
+</script>
+</body>
+</html>

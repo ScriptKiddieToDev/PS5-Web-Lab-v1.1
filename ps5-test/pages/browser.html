@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Navigazione web</title>
+<style>
+:root{color-scheme:dark;--bg:#101116;--panel:#292831;--line:#666570;--text:#f5f4f8;--muted:#c0bec9;--accent:#25d7e8;--error:#ffaaaa}
+*{box-sizing:border-box}
+html,body{min-height:100%;margin:0}
+body{display:grid;place-items:center;padding:20px;background:var(--bg);color:var(--text);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{width:min(900px,100%);padding:clamp(20px,5vw,46px);border:1px solid var(--line);background:var(--panel)}
+h1{margin:0 0 8px;font-size:clamp(22px,4vw,30px);font-weight:500}
+p{margin:0 0 22px;color:var(--muted)}
+form{display:flex;gap:10px}
+input{flex:1;min-width:0;padding:13px 15px;border:1px solid var(--line);border-radius:5px;background:#17171d;color:var(--text);font:inherit}
+input:focus{outline:2px solid var(--accent);outline-offset:1px}
+button{padding:12px 22px;border:1px solid var(--accent);border-radius:5px;background:#12343a;color:#fff;font:inherit;font-weight:650;cursor:pointer}
+button:hover,button:focus-visible{background:#18515a;outline:2px solid var(--accent);outline-offset:2px}
+#status{min-height:1.5em;margin:12px 0 0;color:var(--muted);font-size:13px}
+#status.error{color:var(--error)}
+@media(max-width:520px){form{flex-direction:column}button{width:100%}}
+</style>
+</head>
+<body>
+<main>
+  <h1>Navigazione web</h1>
+  <p>Inserisci un indirizzo web oppure una parola da cercare.</p>
+  <form id="navigateForm">
+    <input id="address" type="text" inputmode="url" autocomplete="url" autocapitalize="off" spellcheck="false" placeholder="https://example.com oppure 192.168.1.4:8765" aria-label="Indirizzo web o ricerca" autofocus>
+    <button type="submit">Cerca</button>
+  </form>
+  <div id="status" role="status" aria-live="polite"></div>
+</main>
+<script>
+(function(){
+  'use strict';
+  var form=document.getElementById('navigateForm');
+  var field=document.getElementById('address');
+  var status=document.getElementById('status');
+
+  function looksLikeAddress(value){
+    return !/\s/.test(value) && (
+      value.indexOf('.')!==-1 ||
+      /^localhost(?::\d+)?(?:\/|$)/i.test(value) ||
+      /^\[[0-9a-f:]+\](?::\d+)?(?:\/|$)/i.test(value) ||
+      /^\d{1,3}(?:\.\d{1,3}){3}(?::\d+)?(?:\/|$)/.test(value)
+    );
+  }
+
+  form.addEventListener('submit',function(event){
+    event.preventDefault();
+    var value=field.value.trim();
+    status.className='';
+    if(!value){status.textContent='Inserisci un indirizzo o una ricerca.';status.className='error';field.focus();return;}
+
+    var destination;
+    if(/^https?:\/\//i.test(value)){
+      destination=value;
+    }else if(/^[a-z][a-z0-9+.-]*:/i.test(value) && !/^[^/\s]+:\d+(?:\/|$)/.test(value)){
+      status.textContent='Sono supportati solo indirizzi HTTP e HTTPS.';
+      status.className='error';
+      return;
+    }else if(looksLikeAddress(value)){
+      var local=/^(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|\[::1\]|[^/]+\.local)(?::\d+)?(?:\/|$)/i.test(value);
+      destination=(local?'http://':'https://')+value;
+    }else{
+      destination='https://www.google.com/search?q='+encodeURIComponent(value);
+    }
+
+    try{
+      var parsed=document.createElement('a');
+      parsed.href=destination;
+      if(parsed.protocol!=='http:' && parsed.protocol!=='https:')throw new Error('protocol');
+      status.textContent='Apro '+parsed.href;
+      window.location.assign(parsed.href);
+    }catch(_error){
+      status.textContent='Indirizzo non valido. Usa un URL HTTP o HTTPS.';
+      status.className='error';
+    }
+  });
+  field.focus();
+}());
+</script>
+</body>
+</html>
